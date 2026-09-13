@@ -175,50 +175,75 @@
         <div class="code" id="drawer-asset-code">RN0174-TC-Z01-SV-R23-001900-I</div>
       </div>
 
-      <div class="drawer-cascading-filters">
+      <!-- INTERACTIVE INTELLIGENT CASCADING DROPDOWNS -->
+      <div class="drawer-filter-bar">
         <div class="filter-group">
-          <label><i class="fa-solid fa-sitemap"></i> Subsistema:</label>
+          <label><i class="fa-solid fa-layer-group"></i> Subsistema:</label>
           <select id="filter-subsistema" onchange="onSubsistemaChange()">
             <option value="ALL">-- Todos los Subsistemas --</option>
           </select>
         </div>
 
         <div class="filter-group">
-          <label><i class="fa-solid fa-layer-group"></i> Familia:</label>
+          <label><i class="fa-solid fa-tags"></i> Familia:</label>
           <select id="filter-familia" onchange="onFamiliaChange()">
             <option value="ALL">-- Todas las Familias --</option>
           </select>
         </div>
 
         <div class="filter-group">
-          <label><i class="fa-solid fa-location-dot"></i> Ubicación / PK:</label>
+          <label><i class="fa-solid fa-route"></i> Progresiva (PK):</label>
           <select id="filter-pk" onchange="onPkChange()">
             <option value="ALL">-- Todas las PKs --</option>
           </select>
         </div>
 
-        <div class="filter-group select-asset-box">
-          <label><i class="fa-solid fa-cube"></i> Activo Específico:</label>
+        <div class="filter-group highlight-select">
+          <label><i class="fa-solid fa-crosshairs"></i> Ir a Activo:</label>
           <select id="filter-asset-select" onchange="onDrawerAssetSelect()">
             <option value="">-- Seleccionar Activo --</option>
           </select>
         </div>
       </div>
 
-      <div class="drawer-metadata-grid">
-        <div class="meta-item"><span class="m-lbl">Progresiva:</span><span class="m-val" id="drawer-pk">PK 1+900</span></div>
-        <div class="meta-item"><span class="m-lbl">Normativa:</span><span class="m-val" id="drawer-normativo">R.23 — Camiones por derecha</span></div>
-        <div class="meta-item"><span class="m-lbl">Ítem Concesión:</span><span class="m-val" id="drawer-concesion">46</span></div>
-        <div class="meta-item"><span class="m-lbl">Estado Operativo:</span><span class="m-val" id="drawer-estado-op">OPERATIVO</span></div>
-        <div class="meta-item"><span class="m-lbl">Estado Verificación:</span><span class="m-val" id="drawer-estado-verif">VERIFICADO</span></div>
-        <div class="meta-item"><span class="m-lbl">Margen:</span><span class="m-val" id="drawer-margen">Margen Izquierda</span></div>
-        <div class="meta-item"><span class="m-lbl">Dimensiones:</span><span class="m-val" id="drawer-dimensiones">0,90 × 0,90 m</span></div>
-        <div class="meta-item"><span class="m-lbl">Plano Proyecto:</span><span class="m-val" id="drawer-plano">RVA_L-C-DT-020</span></div>
-        <div class="meta-item"><span class="m-lbl">Familia:</span><span class="m-val" id="drawer-familia">Señalización Vertical</span></div>
+      <!-- COMPREHENSIVE PSET_AIM_ASSET PROPERTY GRID -->
+      <div class="drawer-prop-grid" id="drawer-prop-grid-container">
+        <div class="box">
+          <span class="k">Progresiva (PK)</span>
+          <span class="v" id="drawer-pk">PK 1+900</span>
+        </div>
+        <div class="box">
+          <span class="k">Norma / Código</span>
+          <span class="v" id="drawer-normativo">R.23 — Camiones circulan por la derecha</span>
+        </div>
+        <div class="box">
+          <span class="k">Ítem de concesión</span>
+          <span class="v" id="drawer-concesion">46</span>
+        </div>
+        <div class="box">
+          <span class="k">Estado operativo</span>
+          <span class="v" id="drawer-estado-op" style="color:#16a34a;">OPERATIVO</span>
+        </div>
+        <div class="box">
+          <span class="k">Estado de verificación</span>
+          <span class="v" id="drawer-estado-verif" style="color:#16a34a;">VERIFICADO</span>
+        </div>
+        <div class="box">
+          <span class="k">Margen / Ubicación</span>
+          <span class="v" id="drawer-margen">Margen izquierda — columna NJ central</span>
+        </div>
+        <div class="box">
+          <span class="k">Dimensiones</span>
+          <span class="v" id="drawer-dimensiones">0,90 × 0,90 m</span>
+        </div>
+        <div class="box">
+          <span class="k">Plano de referencia / proyecto</span>
+          <span class="v" id="drawer-plano">RVA_L-C-DT-020</span>
+        </div>
       </div>
 
-      <div class="drawer-actions">
-        <a href="evidencias_cde/Ficha_Tecnica_RN0174-SV-00018.pdf" target="_blank" download class="btn-drawer-download">
+      <div class="drawer-action-container">
+        <a href="evidencias_cde/Ficha_Tecnica_RN0174-SV-00018.pdf" target="_blank" download class="drawer-action-btn" id="drawer-cde-link">
           <i class="fa-solid fa-file-pdf"></i> Descargar Ficha AIM Publicada
         </a>
       </div>

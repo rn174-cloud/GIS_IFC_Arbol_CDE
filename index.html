@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RN0174 · Conexión Vial Rosario - Victoria (GIS ↔ IFC ↔ Árbol CDE · Gestión de Información)</title>
+  
+  <!-- Fonts & Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Leaflet GIS CSS & JS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  
+  <!-- Three.js 3D Engine & OrbitControls -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  
+  <!-- Custom Styles -->
+  <link rel="stylesheet" href="styles.css?v=20260913_03">
+</head>
+<body>
+  <div id="app-container">
+    
+    <!-- TOP HEADER BAR -->
+    <header class="top-header">
+      <div class="top-brand">
+        <div class="brand-text">
+          <h1>RN0174 <span>| Tramo Conexión Rosario - Victoria</span></h1>
+          <div class="brand-subtitle">Gestión Sincronizada: GIS ↔ IFC ↔ Árbol CDE · Gestión de Información</div>
+        </div>
+      </div>
+      
+      <div class="top-center-search">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <input type="text" id="global-search" placeholder="Buscar ID de activo, PK, Código de negocio..." />
+      </div>
+      
+      <div class="top-actions">
+        <a href="https://drive.google.com/file/d/11GxFWMQTU6iCbS7Lpi8X9JL5v_E7Cq8d/view?usp=drivesdk" target="_blank" class="btn-open-cde" id="top-cde-btn">
+          <i class="fa-solid fa-folder-tree"></i> Repositorio CDE
+        </a>
+      </div>
+    </header>
+
+    <!-- THREE-PANEL EQUAL SPLIT WORKSPACE -->
+    <main class="tri-split-workspace">
+      
+      <!-- PANEL 1: GIS MAP -->
+      <section class="panel-col">
+        <div class="panel-header">
+          <div class="title"><i class="fa-solid fa-map-location-dot"></i> 1. PANTALLA GIS (Mapa Satelital Google Maps)</div>
+          <span style="font-size:10px; color:var(--text-light);">WGS84 / LRS</span>
+        </div>
+        <div class="panel-body">
+          <div id="gis-map"></div>
+
+          <div class="gis-layers-card">
+            <div style="font-weight:800; color:var(--text-dark); margin-bottom:6px; font-size:11.5px; border-bottom:1px solid #e2e8f0; padding-bottom:4px;">
+              <i class="fa-solid fa-layer-group" style="color:#0284c7;"></i> Capas de Información GIS
+            </div>
+            
+            <!-- 1. SINIESTRALIDAD Y SEGURIDAD VIAL -->
+            <label class="layer-item">
+              <input type="checkbox" id="chk-accidents" onclick="toggleGisLayer('accidents', this.checked); toggleAccidentSubOptions(this.checked); event.stopPropagation();" />
+              <span style="font-weight:700; color:#dc2626;"><i class="fa-solid fa-triangle-exclamation"></i> Siniestralidad (Accidentes)</span>
+            </label>
+            <div class="layer-sub-options" id="sub-accidents-options" style="margin-left:20px; margin-top:3px; margin-bottom:6px; display:none; flex-direction:column; gap:3px; font-size:10px;">
+              <label style="font-weight:600; color:#475569;">Filtro por Período / Año:</label>
+              <select id="sel-accident-year" onchange="setAccidentYearFilter(this.value); event.stopPropagation();" style="font-size:10px; padding:2px 4px; border-radius:4px; border:1px solid #cbd5e1; background:#ffffff; font-weight:700; color:#0f172a;">
+                <option value="ALL">Histórico Completo (2003 - 2024)</option>
+                <option value="2020-2024">Últimos 5 Años (2020 - 2024)</option>
+                <option value="2024">Año 2024</option>
+                <option value="2023">Año 2023</option>
+                <option value="2022">Año 2022</option>
+                <option value="2021">Año 2021</option>
+                <option value="2020">Año 2020</option>
+              </select>
+            </div>
+
+            <!-- 2. SEÑALIZACIÓN VERTICAL WITH NESTED RELEVAMIENTO SUB-OPTIONS -->
+            <label class="layer-item">
+              <input type="checkbox" id="chk-sen" checked onclick="toggleGisLayer('sen', this.checked); toggleSenSubOptions(this.checked); event.stopPropagation();" />
+              <span style="font-weight:700; color:#0f172a;"><i class="fa-solid fa-diamond-turn-right" style="color:#ef4444;"></i> Señalización Vertical</span>
+            </label>
+            <div class="layer-sub-options" id="sub-sen-options" style="margin-left:20px; margin-top:3px; margin-bottom:6px; display:flex; flex-direction:column; gap:3px; font-size:10px;">
+              <label style="cursor:pointer; display:flex; align-items:center; gap:5px; color:#dc2626; font-weight:700;">
+                <input type="radio" name="sen-epoch" id="rad-epoch-marzo" value="marzo2026" onchange="setTemporalEpoch('marzo2026'); event.stopPropagation();" />
+                <span>Relevamiento Marzo 2026 <small style="font-weight:600; color:#b91c1c;">(219 Faltantes)</small></span>
+              </label>
+              <label style="cursor:pointer; display:flex; align-items:center; gap:5px; color:#15803d; font-weight:700;">
+                <input type="radio" name="sen-epoch" id="rad-epoch-julio" value="julio2026" checked onchange="setTemporalEpoch('julio2026'); event.stopPropagation();" />
+                <span>Relevamiento Julio 2026 <small style="font-weight:600; color:#15803d;">(773 Verificados)</small></span>
+              </label>
+            </div>
+
+            <!-- 3. INFRAESTRUCTURA & ILUMINACIÓN -->
+            <label class="layer-item"><input type="checkbox" id="chk-hitos" checked onclick="toggleGisLayer('hitos', this.checked); event.stopPropagation();" /> Hitos BIM / Estructuras</label>
+            <label class="layer-item"><input type="checkbox" id="chk-puentes" checked onclick="toggleGisLayer('puentes', this.checked); event.stopPropagation();" /> Equipamiento de Puente</label>
+            <label class="layer-item"><input type="checkbox" id="chk-ilum" checked onclick="toggleGisLayer('ilum', this.checked); event.stopPropagation();" /> Iluminación Vial</label>
+            <label class="layer-item"><input type="checkbox" id="chk-corredor" checked onclick="toggleGisLayer('corredor', this.checked); event.stopPropagation();" /> Traza Corredor RN174</label>
+          </div>
+        </div>
+      </section>
+
+      <!-- PANEL 2: IFC 3D MODEL -->
+      <section class="panel-col">
+        <div class="panel-header">
+          <div class="title"><i class="fa-solid fa-cube"></i> 2. PANTALLA IFC 3D (BIM)</div>
+          <span style="font-size:10px; color:var(--text-light);" id="ifc-elem-count">2.974 Elementos</span>
+        </div>
+        <div class="panel-body">
+          <canvas id="bim-canvas"></canvas>
+
+          <div class="view-projection-bar">
+            <button class="proj-btn active" id="btn-view-3d"><i class="fa-solid fa-cube"></i> 3D</button>
+            <button class="proj-btn" id="btn-view-walk"><i class="fa-solid fa-eye"></i> Calzada</button>
+            <button class="proj-btn" id="btn-view-top"><i class="fa-solid fa-border-all"></i> Planta</button>
+            <button class="proj-btn" id="btn-view-front"><i class="fa-solid fa-bars-staggered"></i> Alzado</button>
+            <button class="proj-btn" id="btn-view-side"><i class="fa-solid fa-scissors"></i> Sección</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- PANEL 3: CDE FOLDER & DOCUMENT TREE (ISO 19650) -->
+      <section class="panel-col">
+        <div class="panel-header">
+          <div class="title"><i class="fa-solid fa-folder-tree"></i> 3. PANTALLA CDE (Árbol de Documentos)</div>
+          <span style="font-size:10px; color:var(--status-green); font-weight:700;">CDE · Gestión de Información</span>
+        </div>
+        <div class="panel-body">
+          <div class="cde-panel-container">
+            
+            <!-- CDE DIRECTORY TREE -->
+            <div class="cde-tree-box">
+              <div class="cde-tree-title">
+                <i class="fa-solid fa-folder-open"></i> ESTRUCTURA DE CARPETAS CDE - RUTA NACIONAL 174
+              </div>
+              <div class="cde-tree-nodes" id="cde-tree-root">
+                <!-- Dynamically Rendered CDE Folder Tree -->
+              </div>
+            </div>
+
+            <!-- CDE SELECTED DOCUMENT PREVIEW CARD -->
+            <div class="cde-preview-card">
+              <div class="card-head">
+                <span><i class="fa-solid fa-file-invoice"></i> DOCUMENTO SELECCIONADO EN CDE</span>
+                <span style="font-size:10px; color:var(--accent-blue);" id="cde-rev-tag">Rev. P01.01 (Publicado)</span>
+              </div>
+              
+              <div style="font-size:11px; color:var(--text-dark); line-height:1.4;">
+                <p><strong>Archivo:</strong> <span id="cde-doc-name">Ficha_Tecnica_RN0174-SV-00018.pdf</span></p>
+                <p><strong>Estado CDE:</strong> <span id="cde-doc-container">PUBLISHED / Carpetas de Activos</span></p>
+                <p><strong>Elemento Vinculado:</strong> <span id="cde-doc-asset" style="font-family:var(--font-mono); color:#0284c7;">RN0174-SV-00018</span></p>
+              </div>
+
+              <!-- DYNAMIC INTERACTIVE DOCUMENT VIEWER -->
+              <div id="cde-doc-viewer" class="cde-interactive-viewer">
+                <!-- Dynamically rendered according to selected CDE document -->
+              </div>
+
+              <!-- SHA-256 INTEGRITY HASH -->
+              <div class="cde-hash-tag" id="cde-hash">
+                SHA-256: 6f46653c4f84d6c14987aaac1638d51f75b71bcf01ab14ad641f8f5a71954d50
+              </div>
+            </div>
+
+            <!-- CRONOLOGÍA DE TRAZABILIDAD DE LA INFORMACIÓN DEL ACTIVO -->
+            <div class="bitacora-card" id="bitacora-container">
+              <!-- Dynamically Rendered 5-Stage Asset Lifecycle Timeline -->
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- BOTTOM SYNCHRONIZED DRAWER WITH INTELLIGENT CASCADING FILTERS -->
+    <footer class="bottom-drawer">
+      
+      <div class="drawer-asset-info">
+        <div class="title" id="drawer-asset-title">
+          <i class="fa-solid fa-cube" style="color:#0284c7;"></i> RN0174-SV-00018
+        </div>
+        <div class="code" id="drawer-asset-code">
+          RN0174-TC-Z01-SV-R23-001900-I
+        </div>
+      </div>
+
+      <!-- INTERACTIVE INTELLIGENT CASCADING DROPDOWNS -->
+      <div class="drawer-filter-bar">
+        <div class="filter-group">
+          <label><i class="fa-solid fa-layer-group"></i> Subsistema:</label>
+          <select id="filter-subsistema" onchange="onSubsistemaChange()">
+            <option value="ALL">-- Todos los Subsistemas --</option>
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label><i class="fa-solid fa-tags"></i> Familia:</label>
+          <select id="filter-familia" onchange="onFamiliaChange()">
+            <option value="ALL">-- Todas las Familias --</option>
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label><i class="fa-solid fa-route"></i> Progresiva (PK):</label>
+          <select id="filter-pk" onchange="onPkChange()">
+            <option value="ALL">-- Todas las PKs --</option>
+          </select>
+        </div>
+
+        <div class="filter-group highlight-select">
+          <label><i class="fa-solid fa-crosshairs"></i> Ir a Activo:</label>
+          <select id="filter-asset-select" onchange="onDrawerAssetSelect()">
+            <option value="">-- Seleccionar Activo --</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- COMPREHENSIVE PSET_AIM_ASSET PROPERTY GRID -->
+      <div class="drawer-prop-grid" id="drawer-prop-grid-container">
+        <div class="box">
+          <span class="k">Progresiva (PK)</span>
+          <span class="v" id="drawer-pk">PK 1+900</span>
+        </div>
+        <div class="box">
+          <span class="k">Norma / Código</span>
+          <span class="v" id="drawer-normativo">R.23 — Camiones circulan por la derecha</span>
+        </div>
+        <div class="box">
+          <span class="k">Ítem de concesión</span>
+          <span class="v" id="drawer-concesion">46</span>
+        </div>
+        <div class="box">
+          <span class="k">Estado operativo</span>
+          <span class="v" id="drawer-estado-op" style="color:#16a34a;">OPERATIVO</span>
+        </div>
+        <div class="box">
+          <span class="k">Estado de verificación</span>
+          <span class="v" id="drawer-estado-verif" style="color:#16a34a;">VERIFICADO</span>
+        </div>
+        <div class="box">
+          <span class="k">Margen / Ubicación</span>
+          <span class="v" id="drawer-margen">Margen izquierda — columna NJ central</span>
+        </div>
+        <div class="box">
+          <span class="k">Dimensiones</span>
+          <span class="v" id="drawer-dimensiones">0,90 × 0,90 m</span>
+        </div>
+        <div class="box">
+          <span class="k">Plano de referencia / proyecto</span>
+          <span class="v" id="drawer-plano">RVA_L-C-DT-020</span>
+        </div>
+      </div>
+
+      <div class="drawer-action-container">
+        <a href="evidencias_cde/Ficha_Tecnica_RN0174-SV-00018.pdf" target="_blank" download class="drawer-action-btn" id="drawer-cde-link">
+          <i class="fa-solid fa-file-pdf"></i> Descargar Ficha AIM Publicada
+        </a>
+      </div>
+
+    </footer>
+
+  </div>
+
+  <script src="app.js?v=20260913_07"></script>
+</body>
+</html>

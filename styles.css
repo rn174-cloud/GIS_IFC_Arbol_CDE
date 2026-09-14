@@ -1252,10 +1252,112 @@ body {
   transition: all 0.15s ease;
 }
 
-.btn-auth-demo:hover {
-  background: #334155;
-  color: #ffffff;
-  border-color: #64748b;
+
+/* MOBILE BOTTOM NAVIGATION BAR (Hidden by default on Desktop) */
+.mobile-bottom-nav {
+  display: none !important;
 }
+
+@media (max-width: 768px) {
+  .top-header {
+    height: auto;
+    flex-wrap: wrap;
+    padding: 8px 12px;
+    gap: 8px;
+  }
+
+  .top-brand .brand-text h1 {
+    font-size: 13px;
+  }
+
+  .top-brand .brand-subtitle {
+    font-size: 9.5px;
+  }
+
+  .top-center-search {
+    order: 3;
+    max-width: 100%;
+    margin: 0;
+    width: 100%;
+  }
+
+  .demo-disclaimer-banner {
+    font-size: 10px;
+    padding: 6px 12px;
+  }
+
+  #app-container {
+    height: 100vh;
+    padding-bottom: 56px; /* Leave space for bottom nav bar */
+    box-sizing: border-box;
+  }
+
+  .tri-split-workspace {
+    display: flex !important;
+    flex-direction: column;
+    flex: 1;
+    height: 100%;
+    overflow: hidden;
+    gap: 0;
+  }
+
+  .panel-col {
+    display: none !important;
+    height: 100% !important;
+    width: 100% !important;
+  }
+
+  .panel-col.mobile-active {
+    display: flex !important;
+  }
+
+  /* Hide Desktop Bottom Drawer on Mobile to maximize 3D/GIS Viewport */
+  .bottom-drawer {
+    display: none !important;
+  }
+
+  /* MOBILE BOTTOM NAVIGATION BAR */
+  .mobile-bottom-nav {
+    display: flex !important;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100vw;
+    height: 56px;
+    background: #0f172a;
+    border-top: 1px solid #334155;
+    z-index: 99999;
+    box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.4);
+  }
+
+  .mobile-nav-tab {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: #94a3b8;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    font-size: 10px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    padding: 6px 0;
+    outline: none;
+  }
+
+  .mobile-nav-tab i {
+    font-size: 16px;
+  }
+
+  .mobile-nav-tab.active {
+    color: #f59e0b;
+    background: rgba(245, 158, 11, 0.12);
+    border-top: 3px solid #f59e0b;
+  }
+}
+
 
 

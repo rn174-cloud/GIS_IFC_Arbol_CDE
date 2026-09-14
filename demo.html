@@ -51,9 +51,14 @@
     </header>
 
     <!-- PUBLIC DEMO DISCLAIMER BANNER -->
-    <div class="demo-disclaimer-banner">
-      <i class="fa-solid fa-circle-info"></i>
-      <span><strong>AVISO DEMOSTRACIÓN PÚBLICA (ACCESO QR):</strong> Plataforma de Gestión Integrada - RN174 (Rosario - Victoria). Los datos presentados son para fines de exhibición de gestión de activos viales (GIS ↔ IFC ↔ CDE). Las capas de datos sensibles se encuentran omitidas de acuerdo con protocolos de seguridad de la información.</span>
+    <div class="demo-disclaimer-banner" id="demo-banner">
+      <div class="banner-content">
+        <i class="fa-solid fa-triangle-exclamation icon-info"></i>
+        <span><strong>AVISO DEMOSTRACIÓN PÚBLICA (ACCESO QR):</strong> Plataforma de Gestión Integrada - RN174 (Rosario - Victoria). Los datos presentados son para fines de exhibición de gestión de activos viales (GIS ↔ IFC ↔ CDE). Las capas de datos sensibles se encuentran omitidas de acuerdo con protocolos de seguridad de la información.</span>
+      </div>
+      <button class="btn-close-banner" onclick="document.getElementById('demo-banner').style.display='none'" title="Cerrar aviso">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
     </div>
 
     <!-- THREE-PANEL EQUAL SPLIT WORKSPACE -->
@@ -255,6 +260,22 @@
       </div>
 
     </footer>
+
+    <!-- MOBILE BOTTOM NAVIGATION BAR (Only visible on Mobile <= 768px) -->
+    <nav class="mobile-bottom-nav">
+      <button class="mobile-nav-tab active" data-tab="1" onclick="switchMobileTab(1)">
+        <i class="fa-solid fa-map-location-dot"></i>
+        <span>1. MAPA GIS</span>
+      </button>
+      <button class="mobile-nav-tab" data-tab="2" onclick="switchMobileTab(2)">
+        <i class="fa-solid fa-cube"></i>
+        <span>2. VISOR 3D</span>
+      </button>
+      <button class="mobile-nav-tab" data-tab="3" onclick="switchMobileTab(3)">
+        <i class="fa-solid fa-folder-tree"></i>
+        <span>3. ÁRBOL CDE</span>
+      </button>
+    </nav>
 
   </div>
 

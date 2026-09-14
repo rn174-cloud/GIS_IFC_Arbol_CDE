@@ -324,6 +324,22 @@
 
     </footer>
 
+    <!-- MOBILE BOTTOM NAVIGATION BAR (Only visible on Mobile <= 768px) -->
+    <nav class="mobile-bottom-nav">
+      <button class="mobile-nav-tab active" data-tab="1" onclick="switchMobileTab(1)">
+        <i class="fa-solid fa-map-location-dot"></i>
+        <span>1. MAPA GIS</span>
+      </button>
+      <button class="mobile-nav-tab" data-tab="2" onclick="switchMobileTab(2)">
+        <i class="fa-solid fa-cube"></i>
+        <span>2. VISOR 3D</span>
+      </button>
+      <button class="mobile-nav-tab" data-tab="3" onclick="switchMobileTab(3)">
+        <i class="fa-solid fa-folder-tree"></i>
+        <span>3. ÁRBOL CDE</span>
+      </button>
+    </nav>
+
   </div>
 
   <script src="app.js?v=20260913_07"></script>

@@ -1614,3 +1614,65 @@ function set3DView(mode) {
 
   threeControls.update();
 }
+
+// 12. MOBILE RESPONSIVE TAB SWITCHER (Propuesta A)
+function switchMobileTab(tabNum) {
+  if (window.innerWidth > 768) return;
+
+  const panels = document.querySelectorAll('.tri-split-workspace .panel-col');
+  const tabs = document.querySelectorAll('.mobile-nav-tab');
+
+  panels.forEach((p, idx) => {
+    if (idx === (tabNum - 1)) {
+      p.classList.add('mobile-active');
+    } else {
+      p.classList.remove('mobile-active');
+    }
+  });
+
+  tabs.forEach((t) => {
+    const tVal = parseInt(t.getAttribute('data-tab') || '1', 10);
+    if (tVal === tabNum) {
+      t.classList.add('active');
+    } else {
+      t.classList.remove('active');
+    }
+  });
+
+  // Force map / 3D canvas resize trigger
+  if (tabNum === 1 && gisMap) {
+    setTimeout(() => gisMap.invalidateSize(), 150);
+  } else if (tabNum === 2 && threeRenderer && threeCamera) {
+    setTimeout(() => {
+      const container = document.querySelector('.panel-col:nth-child(2) .panel-body');
+      if (container) {
+        const w = container.clientWidth || 350;
+        const h = container.clientHeight || 450;
+        threeCamera.aspect = w / h;
+        threeCamera.updateProjectionMatrix();
+        threeRenderer.setSize(w, h);
+      }
+    }, 150);
+  }
+}
+
+// Mobile Initial tab trigger
+window.addEventListener('load', () => {
+  if (window.innerWidth <= 768) {
+    switchMobileTab(1);
+  }
+});
+
+window.addEventListener('resize', () => {
+  if (window.innerWidth <= 768) {
+    const activeTab = document.querySelector('.mobile-nav-tab.active');
+    const tabNum = activeTab ? parseInt(activeTab.getAttribute('data-tab') || '1', 10) : 1;
+    switchMobileTab(tabNum);
+  } else {
+    // Reset desktop panels
+    document.querySelectorAll('.tri-split-workspace .panel-col').forEach(p => {
+      p.classList.remove('mobile-active');
+    });
+  }
+});
+

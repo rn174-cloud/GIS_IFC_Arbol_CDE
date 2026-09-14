@@ -9,6 +9,14 @@
       "dest": "/demo.html"
     },
     {
+      "src": "/gestion",
+      "dest": "/index.html"
+    },
+    {
+      "src": "/",
+      "dest": "/demo.html"
+    },
+    {
       "src": "/(.*)",
       "dest": "/$1"
     }

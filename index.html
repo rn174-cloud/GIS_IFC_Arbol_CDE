@@ -23,6 +23,64 @@
   <link rel="stylesheet" href="./styles.css">
 </head>
 <body>
+  <!-- PRODUCTION AUTHENTICATION PIN MODAL -->
+  <div id="auth-modal-overlay" class="auth-modal-backdrop">
+    <div class="auth-modal-card">
+      <div class="auth-modal-header">
+        <i class="fa-solid fa-lock" style="color:#f59e0b;"></i>
+        <h2>Acceso Restringido · Gestión RN174</h2>
+      </div>
+      <p class="auth-modal-desc">
+        Ingrese la clave de seguridad para acceder a la versión completa del Gemelo Digital (GIS, IFC 3D, CDE y Siniestralidad).
+      </p>
+      
+      <form id="auth-form" onsubmit="handleAuthSubmit(event)">
+        <div class="auth-input-group">
+          <i class="fa-solid fa-key"></i>
+          <input type="password" id="auth-pin-input" placeholder="Ingrese la clave..." autofocus required />
+        </div>
+        <div id="auth-error-msg" class="auth-error-text" style="display:none;">
+          <i class="fa-solid fa-triangle-exclamation"></i> Clave incorrecta. Intente nuevamente.
+        </div>
+        
+        <div class="auth-actions">
+          <button type="submit" class="btn-auth-submit">
+            <i class="fa-solid fa-right-to-bracket"></i> Desbloquear Acceso
+          </button>
+          <a href="/demo" class="btn-auth-demo">
+            <i class="fa-solid fa-qrcode"></i> Ir a la Versión Pública Demo (QR)
+          </a>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    (function() {
+      if (sessionStorage.getItem('rn174_prod_auth') === 'true') {
+        document.addEventListener('DOMContentLoaded', () => {
+          const overlay = document.getElementById('auth-modal-overlay');
+          if (overlay) overlay.style.display = 'none';
+        });
+      }
+    })();
+
+    function handleAuthSubmit(e) {
+      e.preventDefault();
+      const pin = document.getElementById('auth-pin-input').value.trim();
+      const errorMsg = document.getElementById('auth-error-msg');
+      
+      if (pin.toLowerCase() === "zaira") {
+        sessionStorage.setItem('rn174_prod_auth', 'true');
+        document.getElementById('auth-modal-overlay').style.display = 'none';
+      } else {
+        errorMsg.style.display = 'flex';
+        document.getElementById('auth-pin-input').value = '';
+        document.getElementById('auth-pin-input').focus();
+      }
+    }
+  </script>
+
   <div id="app-container">
     
     <!-- TOP HEADER BAR -->

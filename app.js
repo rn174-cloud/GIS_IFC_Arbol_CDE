@@ -604,14 +604,16 @@ function toggleGisLayer(layerName, isChecked) {
 function parsePkToKm(pkVal) {
   if (typeof pkVal === 'number') return pkVal;
   if (!pkVal) return NaN;
-  const str = String(pkVal).trim().replace(/PK/gi, '').trim();
-  if (str.includes('+')) {
-    const parts = str.split('+');
-    const km = parseFloat(parts[0]) || 0;
-    const m = parseFloat(parts[1]) || 0;
-    return km + (m / 1000.0);
+  const str = String(pkVal).trim();
+  const plusMatch = str.match(/(\d+)\+(\d+)/);
+  if (plusMatch) {
+    return parseFloat(plusMatch[1]) + (parseFloat(plusMatch[2]) / 1000.0);
   }
-  return parseFloat(str);
+  const decMatch = str.match(/(\d+\.\d+)/);
+  if (decMatch) {
+    return parseFloat(decMatch[1]);
+  }
+  return NaN;
 }
 
 // 7. GROUND-TRUTH LRS GIS COORDINATE INTERPOLATION (EXACT POSTGIS DB ALIGNMENT)
@@ -634,12 +636,13 @@ function getGisCoordsForAsset(assetId, assetInfo, elementData) {
   // 2. Compute PK km
   let pk = parsePkToKm(assetInfo ? assetInfo.pk : null);
 
-  if (isNaN(pk) && elementData && elementData.progresiva_km) {
+  if (isNaN(pk) && elementData && elementData.progresiva_km !== undefined) {
     pk = parsePkToKm(elementData.progresiva_km);
   }
-  if ((isNaN(pk) || pk === 1.5) && elementData && elementData.centroid) {
+  if (isNaN(pk) && elementData && elementData.centroid && Array.isArray(elementData.centroid)) {
     const xMeters = elementData.centroid[0];
-    pk = 0.544 + (xMeters / 1000.0);
+    // 3D local origin X=0 is Pila 42 at PK 1+706
+    pk = 1.706 + (xMeters / 1000.0);
   }
   if (isNaN(pk) && assetInfo && assetInfo.busCode) {
     const m = assetInfo.busCode.match(/(\d{6})/);
@@ -782,70 +785,72 @@ function getElementInfo(assetId, elementData) {
   return { assetId, busCode, name, familia, subsistema, pk, plano, normativo, concesion, dimensiones, estadoOp, estadoVerif, margen };
 }
 
-// 9. GIS PANNING & HIGHLIGHTING (SMOOTH LRS FLYTO)
+// 9. GIS PANNING & HIGHLIGHTING (SMOOTH LRS FLYTO FOR ALL ASSETS)
 function panGisToAsset(assetId, assetInfo) {
   if (!gisMap) return;
 
   gisMap.invalidateSize();
 
-  let lat, lon;
+  const info = assetInfo || getElementInfo(assetId);
+  const mesh = findMeshForAsset(assetId);
+  const elementData = mesh ? mesh.userData : info;
 
-  // 1. If marker already exists in gisMarkers on map, use its EXACT LatLng!
+  let lat, lon;
   if (assetId && gisMarkers[assetId]) {
     const latLng = gisMarkers[assetId].getLatLng();
     lat = latLng.lat;
     lon = latLng.lng;
   } else {
-    // 2. Otherwise query 3D mesh centroid or LRS keypoints
-    const mesh = findMeshForAsset(assetId);
-    const elementData = mesh ? mesh.userData : assetInfo;
-    [lat, lon] = getGisCoordsForAsset(assetId, assetInfo, elementData);
+    [lat, lon] = getGisCoordsForAsset(assetId, info, elementData);
   }
 
-  if (lat && lon) {
-    console.log(`[GIS FlyTo] Flying to exact position Lat: ${lat.toFixed(5)}, Lon: ${lon.toFixed(5)} for Asset: ${assetId}`);
+  if (!lat || !lon) return;
 
-    gisMap.flyTo([lat, lon], 17, {
-      animate: true,
-      duration: 1.0
-    });
+  console.log(`[GIS FlyTo] Flying to position Lat: ${lat.toFixed(5)}, Lon: ${lon.toFixed(5)} for Asset: ${assetId} (${info.pk})`);
 
-    if (selectedGisHighlight) {
-      selectedGisHighlight.setLatLng([lat, lon]);
-    } else {
-      selectedGisHighlight = L.circleMarker([lat, lon], {
-        radius: 12,
-        fillColor: '#ef4444',
-        color: '#991b1b',
-        weight: 3,
-        opacity: 1,
-        fillOpacity: 0.95
-      }).addTo(gisMap);
-    }
+  gisMap.flyTo([lat, lon], 17, {
+    animate: true,
+    duration: 1.0
+  });
 
-    const info = assetInfo || getElementInfo(assetId);
-    const isR23 = (info.assetId === 'RN0174-SV-00018' || (info.busCode && info.busCode.includes('001900')));
-    const trazabilityStatusHtml = isR23 
-      ? '<span style="color:#b45309; font-weight:800;">ABIERTA — evidencia pendiente</span>'
-      : '<span style="color:#16a34a; font-weight:800;">CONFORME / CERRADA</span>';
+  if (selectedGisHighlight) {
+    selectedGisHighlight.setLatLng([lat, lon]);
+  } else {
+    selectedGisHighlight = L.circleMarker([lat, lon], {
+      radius: 12,
+      fillColor: '#ef4444',
+      color: '#991b1b',
+      weight: 3,
+      opacity: 1,
+      fillOpacity: 0.95
+    }).addTo(gisMap);
+  }
 
-    selectedGisHighlight.bindPopup(`
-      <div class="popup-card">
-        <div class="popup-header">
-          <span><i class="fa-solid fa-cube" style="color:#0284c7;"></i> ${info.assetId}</span>
-          <span class="tag">AIM · CDE</span>
-        </div>
-        <table class="popup-table">
-          <tr><td class="lbl">ID de activo:</td><td class="val" style="font-family:var(--font-mono); color:#0284c7; font-weight:800;">${info.assetId}</td></tr>
-          <tr><td class="lbl">Progresiva (PK):</td><td class="val">${info.pk}</td></tr>
-          <tr><td class="lbl">Coordenadas:</td><td class="val" style="font-family:var(--font-mono);">WGS84 — Lat.: ${lat.toFixed(5)} · Lon.: ${lon.toFixed(5)}</td></tr>
-          <tr><td class="lbl">Ubicación:</td><td class="val">${info.margen}</td></tr>
-          <tr><td class="lbl">Última evidencia:</td><td class="val">${info.ultActualizacion || 'Julio 2026'}</td></tr>
-          <tr><td class="lbl">Estado físico:</td><td class="val" style="color:#16a34a; font-weight:800;">VERIFICADO</td></tr>
-          <tr><td class="lbl">Trazabilidad doc.:</td><td class="val">${trazabilityStatusHtml}</td></tr>
-        </table>
+  const isR23 = (info.assetId === 'RN0174-SV-00018' || (info.busCode && info.busCode.includes('001900')));
+  const trazabilityStatusHtml = isR23 
+    ? '<span style="color:#b45309; font-weight:800;">ABIERTA — evidencia pendiente</span>'
+    : '<span style="color:#16a34a; font-weight:800;">CONFORME / CERRADA</span>';
+
+  selectedGisHighlight.bindPopup(`
+    <div class="popup-card">
+      <div class="popup-header">
+        <span><i class="fa-solid fa-cube" style="color:#0284c7;"></i> ${info.assetId}</span>
+        <span class="tag">AIM · GIS</span>
       </div>
-    `, { minWidth: 330, maxWidth: 360 }).openPopup();
+      <table class="popup-table">
+        <tr><td class="lbl">ID de activo:</td><td class="val" style="font-family:var(--font-mono); color:#0284c7; font-weight:800;">${info.assetId}</td></tr>
+        <tr><td class="lbl">Nombre:</td><td class="val">${info.name || info.assetId}</td></tr>
+        <tr><td class="lbl">Progresiva (PK):</td><td class="val">${info.pk}</td></tr>
+        <tr><td class="lbl">Coordenadas:</td><td class="val" style="font-family:var(--font-mono);">WGS84 — Lat.: ${lat.toFixed(5)} · Lon.: ${lon.toFixed(5)}</td></tr>
+        <tr><td class="lbl">Ubicación:</td><td class="val">${info.margen}</td></tr>
+        <tr><td class="lbl">Estado físico:</td><td class="val" style="color:#16a34a; font-weight:800;">VERIFICADO</td></tr>
+        <tr><td class="lbl">Trazabilidad doc.:</td><td class="val">${trazabilityStatusHtml}</td></tr>
+      </table>
+    </div>
+  `, { minWidth: 300, maxWidth: 350 }).openPopup();
+
+  if (assetId && gisMarkers[assetId]) {
+    gisMarkers[assetId].openPopup();
   }
 }
 

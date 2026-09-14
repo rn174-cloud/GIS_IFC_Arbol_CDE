@@ -116,6 +116,11 @@
         <div class="panel-body">
           <div id="gis-map"></div>
 
+          <!-- MOBILE FLOATING TOGGLE BUTTON FOR GIS LAYERS -->
+          <button class="btn-gis-layers-toggle" id="btn-toggle-layers-mobile" onclick="toggleMobileGisLayers(event)">
+            <i class="fa-solid fa-layer-group"></i> Capas GIS <i class="fa-solid fa-chevron-down" id="icon-chevron-layers"></i>
+          </button>
+
           <div class="gis-layers-card">
             <div style="font-weight:800; color:var(--text-dark); margin-bottom:6px; font-size:11.5px; border-bottom:1px solid #e2e8f0; padding-bottom:4px;">
               <i class="fa-solid fa-layer-group" style="color:#0284c7;"></i> Capas de Información GIS

@@ -114,14 +114,13 @@
           <span style="font-size:10px; color:var(--text-light);">WGS84 / LRS</span>
         </div>
         <div class="panel-body">
-          <div id="gis-map"></div>
+          <div id="gis-map">
+            <!-- MOBILE FLOATING TOGGLE BUTTON FOR GIS LAYERS -->
+            <button class="btn-gis-layers-toggle" id="btn-toggle-layers-mobile" onclick="toggleMobileGisLayers(event)">
+              <i class="fa-solid fa-layer-group"></i> Capas GIS <i class="fa-solid fa-chevron-down" id="icon-chevron-layers"></i>
+            </button>
 
-          <!-- MOBILE FLOATING TOGGLE BUTTON FOR GIS LAYERS -->
-          <button class="btn-gis-layers-toggle" id="btn-toggle-layers-mobile" onclick="toggleMobileGisLayers(event)">
-            <i class="fa-solid fa-layer-group"></i> Capas GIS <i class="fa-solid fa-chevron-down" id="icon-chevron-layers"></i>
-          </button>
-
-          <div class="gis-layers-card">
+            <div class="gis-layers-card">
             <div style="font-weight:800; color:var(--text-dark); margin-bottom:6px; font-size:11.5px; border-bottom:1px solid #e2e8f0; padding-bottom:4px;">
               <i class="fa-solid fa-layer-group" style="color:#0284c7;"></i> Capas de Información GIS
             </div>
@@ -165,6 +164,7 @@
             <label class="layer-item"><input type="checkbox" id="chk-puentes" checked onclick="toggleGisLayer('puentes', this.checked); event.stopPropagation();" /> Equipamiento de Puente</label>
             <label class="layer-item"><input type="checkbox" id="chk-ilum" checked onclick="toggleGisLayer('ilum', this.checked); event.stopPropagation();" /> Iluminación Vial</label>
             <label class="layer-item"><input type="checkbox" id="chk-corredor" checked onclick="toggleGisLayer('corredor', this.checked); event.stopPropagation();" /> Traza Corredor RN174</label>
+          </div>
           </div>
         </div>
       </section>

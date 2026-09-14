@@ -123,17 +123,37 @@ function init3DViewer() {
   ground.receiveShadow = true;
   threeScene.add(ground);
 
-  // Raycaster for Element Selection
+  // Raycaster for 3D Element Selection (Mouse + Touch Screen Compatible)
   const raycaster = new THREE.Raycaster();
   const mouse = new THREE.Vector2();
 
-  canvas.addEventListener('mousemove', (event) => {
+  let ptrStartX = 0, ptrStartY = 0;
+
+  function getIntersectableMeshes() {
+    const meshes = [];
+    if (threeScene) {
+      threeScene.traverse((obj) => {
+        if (obj.isMesh && obj !== ground && obj.geometry) {
+          meshes.push(obj);
+        }
+      });
+    }
+    return meshes;
+  }
+
+  canvas.addEventListener('pointerdown', (e) => {
+    ptrStartX = e.clientX;
+    ptrStartY = e.clientY;
+  });
+
+  canvas.addEventListener('pointermove', (event) => {
     const rect = canvas.getBoundingClientRect();
+    if (!rect.width || !rect.height) return;
     mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
     mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
 
     raycaster.setFromCamera(mouse, threeCamera);
-    const intersects = raycaster.intersectObjects(Object.values(meshMap));
+    const intersects = raycaster.intersectObjects(getIntersectableMeshes());
 
     if (intersects.length > 0) {
       canvas.style.cursor = 'pointer';
@@ -142,16 +162,22 @@ function init3DViewer() {
     }
   });
 
-  canvas.addEventListener('click', (event) => {
+  canvas.addEventListener('pointerup', (event) => {
+    const dist = Math.hypot(event.clientX - ptrStartX, event.clientY - ptrStartY);
+    if (dist > 6) return; // Ignore drag/rotation gestures
+
     const rect = canvas.getBoundingClientRect();
+    if (!rect.width || !rect.height) return;
+
     mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
     mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
 
     raycaster.setFromCamera(mouse, threeCamera);
-    const intersects = raycaster.intersectObjects(Object.values(meshMap));
+    const intersects = raycaster.intersectObjects(getIntersectableMeshes());
 
     if (intersects.length > 0) {
       const hitMesh = intersects[0].object;
+      console.log("[3D Raycaster] Hit element:", hitMesh.userData);
       select3DElement(hitMesh, hitMesh.userData, '3d_click');
     }
   });
@@ -205,6 +231,10 @@ function initGISMap() {
       });
     });
   }
+
+  gisMap.on('click popupopen', () => {
+    if (typeof collapseMobileGisLayers === 'function') collapseMobileGisLayers();
+  });
 }
 
 // 5. FETCH ASSETS FROM DATABASE
@@ -1437,20 +1467,140 @@ function setupUIHandlers() {
   setupLayerToggle('chk-ilum', gisLayers.ilum);
   setupLayerToggle('chk-corredor', gisLayers.corredor);
 
-  // Global Search
-  const search = document.getElementById('global-search');
-  if (search) {
-    search.addEventListener('input', (e) => {
-      const q = e.target.value.toLowerCase().trim();
-      if (q) {
-        const match = allAssets.find(a => 
-          a.asset_id.toLowerCase().includes(q) || 
-          (a.business_code && a.business_code.toLowerCase().includes(q))
-        );
-        if (match) selectAssetById(match.asset_id, 'search');
+  // Global Search Input & Magnifying Glass Icon Click Handler
+  const searchInput = document.getElementById('global-search');
+  const searchIcon = document.querySelector('.top-center-search i');
+
+  if (searchInput) {
+    searchInput.addEventListener('input', (e) => {
+      performGlobalSearch(e.target.value);
+    });
+
+    searchInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        performGlobalSearch(searchInput.value, true);
+      }
+    });
+
+    searchInput.addEventListener('focus', (e) => {
+      if (e.target.value.trim()) performGlobalSearch(e.target.value);
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.top-center-search')) {
+        hideSearchResults();
       }
     });
   }
+
+  if (searchIcon) {
+    searchIcon.style.cursor = 'pointer';
+    searchIcon.addEventListener('click', () => {
+      if (searchInput) performGlobalSearch(searchInput.value, true);
+    });
+  }
+}
+
+function performGlobalSearch(q, forceSelect = false) {
+  if (!q) {
+    hideSearchResults();
+    return;
+  }
+
+  const query = q.toLowerCase().trim();
+  const results = [];
+  const addedIds = new Set();
+
+  // 1. Search in Database AllAssets
+  allAssets.forEach(a => {
+    const id = a.asset_id || a.business_code || '';
+    const name = a.nombre || a.name || '';
+    const busCode = a.business_code || '';
+    const fam = a.familia || '';
+    const pk = a.progresiva_km ? String(a.progresiva_km) : '';
+
+    if (id && !addedIds.has(id.toUpperCase())) {
+      if (id.toLowerCase().includes(query) || name.toLowerCase().includes(query) || busCode.toLowerCase().includes(query) || fam.toLowerCase().includes(query) || pk.includes(query)) {
+        addedIds.add(id.toUpperCase());
+        results.push({
+          id: id,
+          title: id,
+          name: name || id,
+          subtitle: `PK ${pk ? 'PK ' + pk : '1+900'} · ${fam || 'Activo AIM'}`
+        });
+      }
+    }
+  });
+
+  // 2. Search in 3D Mesh Elements
+  Object.values(meshMap).forEach(m => {
+    const ud = m.userData || {};
+    const id = ud.asset_id || ud.business_code || ud.ifc_global_id || '';
+    const name = ud.name || '';
+    const busCode = ud.business_code || '';
+
+    if (id && !addedIds.has(id.toUpperCase())) {
+      if (id.toLowerCase().includes(query) || name.toLowerCase().includes(query) || busCode.toLowerCase().includes(query)) {
+        addedIds.add(id.toUpperCase());
+        results.push({
+          id: id,
+          title: id,
+          name: name || id,
+          subtitle: `3D IFC · ${ud.ifc_class || 'Elemento 3D'}`
+        });
+      }
+    }
+  });
+
+  console.log(`[Global Search] Found ${results.length} matches for '${query}'`);
+
+  if (results.length === 0) {
+    hideSearchResults();
+    return;
+  }
+
+  if (forceSelect && results.length > 0) {
+    selectAssetById(results[0].id, 'search');
+    hideSearchResults();
+    return;
+  }
+
+  showSearchResults(results);
+}
+
+function showSearchResults(results) {
+  let menu = document.getElementById('search-results-dropdown');
+  const container = document.querySelector('.top-center-search');
+  if (!container) return;
+
+  if (!menu) {
+    menu = document.createElement('div');
+    menu.id = 'search-results-dropdown';
+    menu.className = 'search-results-menu';
+    container.appendChild(menu);
+  }
+
+  let html = '';
+  results.slice(0, 8).forEach(r => {
+    html += `
+      <div class="search-item" onclick="selectAssetById('${r.id}', 'search'); hideSearchResults();">
+        <div>
+          <span class="s-id"><i class="fa-solid fa-cube"></i> ${r.id}</span>
+          <span style="display:block; font-size:10px; color:#cbd5e1;">${r.name}</span>
+        </div>
+        <span class="s-sub">${r.subtitle}</span>
+      </div>
+    `;
+  });
+
+  menu.innerHTML = html;
+  menu.style.display = 'block';
+}
+
+function hideSearchResults() {
+  const menu = document.getElementById('search-results-dropdown');
+  if (menu) menu.style.display = 'none';
 }
 
 function normalizeStr(str) {
@@ -1675,4 +1825,29 @@ window.addEventListener('resize', () => {
     });
   }
 });
+
+function toggleMobileGisLayers(e) {
+  if (e) e.stopPropagation();
+  const card = document.querySelector('.gis-layers-card');
+  const chevron = document.getElementById('icon-chevron-layers');
+  if (!card) return;
+
+  card.classList.toggle('mobile-expanded');
+  const isExpanded = card.classList.contains('mobile-expanded');
+
+  if (chevron) {
+    chevron.className = isExpanded ? 'fa-solid fa-chevron-up' : 'fa-solid fa-chevron-down';
+  }
+}
+
+function collapseMobileGisLayers() {
+  if (window.innerWidth > 768) return;
+  const card = document.querySelector('.gis-layers-card');
+  const chevron = document.getElementById('icon-chevron-layers');
+  if (card && card.classList.contains('mobile-expanded')) {
+    card.classList.remove('mobile-expanded');
+    if (chevron) chevron.className = 'fa-solid fa-chevron-down';
+  }
+}
+
 
